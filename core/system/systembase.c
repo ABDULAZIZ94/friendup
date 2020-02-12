@@ -356,7 +356,7 @@ SystemBase *SystemInit( void )
 			}
 			else
 			{
-				l->l_SSLAcceptFlags = SSL_VERIFY_PEER;
+				l->l_SSLAcceptFlags = SSL_VERIFY_NONE;
 			}
 			
 			tptr  = plib->ReadStringNCS( prop, "Core:Certpath", "cfg/crt/" );

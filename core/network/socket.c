@@ -1180,7 +1180,7 @@ inline Socket* SocketAccept( Socket* sock )
 		}
 
 		SSL_set_ex_data( incoming->s_Ssl, 0, sock->s_SB );
-		SSL_set_verify( incoming->s_Ssl, sock->s_AcceptFlags, sock->VerifyPeer );
+		SSL_set_verify( incoming->s_Ssl, sock->s_AcceptFlags, NULL );//sock->VerifyPeer );
 		//SSL_set_verify( incoming->s_Ssl, SSL_VERIFY_PEER, 0 );
 		//SSL_CTX_set_verify( sock->s_Ctx, SSL_VERIFY_PEER, VerifyPeer);
 

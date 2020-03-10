@@ -613,6 +613,13 @@ function GetViewDisplayMargins( div )
 	return margins;
 }
 
+function ConstrainWindows()
+{
+	if( !window.movableWindows ) return;
+	for( var a in movableWindows )
+		ConstrainWindow( movableWindows[ a ] );
+}
+
 // Constrain position (optionally providing left and top)
 function ConstrainWindow( div, l, t, depth, caller )
 {
@@ -2531,6 +2538,9 @@ var View = function( args )
 				{
 					div.unsnap();
 				}
+				
+				// Make sure the tray is updated
+				PollTray();
 			
 				return cancelBubble( e );
 			}

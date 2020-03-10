@@ -10,7 +10,7 @@ OUTPUT			=	bin/FriendCore
 #MYSQLLIBSREQ		=	-lmysqlclient -lpthread -lz -lm -lrt -latomic -lssl -lcrypto -ldl
 MYSQLLIBSREQ		=	-lmysqlclient -lpthread -lz -lm -lrt -latomic 
 CFLAGS			=	$(GLOBAL_CFLAGS) -I../libs/ -I../$(LIBWS_INCLUDE_DIR) -I. $(shell mysql_config --cflags) -I../$(LIBXML2_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR)  -I../$(LIBSSH2_INCLUDE_DIR)
-LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lm -lrt -lmagic -lxml2 $(MYSQLLIBSREQ) -lgd -lpng -lz -ljpeg -luv
+LFLAGS			=	
 DFLAGS			=	-M $(CFLAGS)  
 FPATH			=	$(shell pwd)
 
@@ -21,6 +21,17 @@ SERVICES		=	apacheserv mysqlserv nodejsserv phpserv
 
 SERVICEFLAGS		=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -Ofast -funroll-loops -I. -Wno-unused  -shared -fPIC
 MATHLIB			=
+
+# we have to include Sanitizer lib before others
+ifeq ($(USE_SANITIZER),1)
+LFLAGS					+=	-lasan
+endif
+
+LFLAGS					+=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lm -lrt -lmagic -lxml2 $(MYSQLLIBSREQ) -lgd -lpng -lz -ljpeg -luv
+
+ifeq ($(USE_MEMCHECK),1)
+LFLAGS					+=	-lmcheck
+endif
 
 ifeq ($(OPENSSL_INTERNAL),1)
 CFLAGS					+=	-I../libs-ext/openssl/include/
@@ -39,10 +50,6 @@ endif
 
 ifeq ($(ENABLE_SSH),1)
 LFLAGS					+=	-lssh
-endif
-
-ifeq ($(USE_SANITIZER),1)
-LFLAGS					+=	-lasan
 endif
 
 ifeq ($(DEBUG),1)
@@ -89,7 +96,7 @@ endif
 C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/services/*.c util/*.c class/*.c ssh/*.c hardware/*.c system/*.c \
 			system/dictionary/*.c system/module/*.c system/fsys/*.c system/json/*.c system/user/*.c util/log/*.c system/inram/*.c system/invar/*.c system/application/*.c system/auth/*.c \
 			hardware/usb/*.c hardware/printer/*.c system/datatypes/images/*.c system/log/*.c system/admin/*.c communication/*.c system/autotask/*.c system/token/*.c \
-			websockets/*.c security/*.c webdav/*.c system/connection/*.c mobile_app/*.c mutex/*.c system/usa/*.c system/mobile/*.c system/calendar/*.c config/*.c system/notification/*.c system/usergroup/*.c system/permission/*.c )
+			websockets/*.c security/*.c webdav/*.c system/connection/*.c mobile_app/*.c mutex/*.c system/usa/*.c system/mobile/*.c system/calendar/*.c config/*.c system/notification/*.c system/usergroup/*.c system/permission/*.c system/roles/*.c )
 OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
 ALL:	$(OBJ_FILES) $(OUTPUT) $(MODS) $(FSYS) $(LOGGERS) $(SERVICES)
@@ -361,6 +368,10 @@ obj/%.o: system/notification/%.c system/notification/*.h system/notification/%.d
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/permission/%.c system/permission/*.h system/permission/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+obj/%.o: system/roles/%.c system/roles/*.h system/roles/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(CC) $(CFLAGS) -c -o $@ $<
 	

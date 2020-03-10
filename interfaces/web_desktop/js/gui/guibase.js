@@ -2538,6 +2538,10 @@ function CheckScreenTitle( screen, force )
 	var testObject = screen ? screen : window.currentScreen;
 	if( !testObject && !force ) return;
 	
+	// Orphan node!
+	if( window.currentMovable && !( window.currentMovable.parentNode && window.currentMovable.parentNode.parentNode ) )
+		window.currentMovable = null;
+	
 	// If nothing changed, don't change
 	if( prevScreen && prevWindow && !force )
 	{
@@ -2749,7 +2753,6 @@ function PollTaskbar( curr )
 					ge( 'Statusbar' ).className = 'Docklist';
 				
 					var dlet = dlets[ 0 ];
-					dlet.style.zIndex = 2147483641;
 					var d = document.createElement( 'div' );
 					d.id = 'DockWindowList';
 					d.className = 'WindowList';
@@ -2804,18 +2807,6 @@ function PollTaskbar( curr )
 			else
 			{
 				var right = '0';
-				if( ge( 'Tray' ) )
-				{
-					if( Workspace.mainDock && Workspace.mainDock.conf.size )
-					{
-						var rems = [ 'Size80', 'Size59', 'Size32', 'Size16' ];
-						for( var a = 0; a < rems.length; a++ )
-							ge( 'Tray' ).classList.remove( rems[a] );
-						ge( 'Tray' ).classList.add( 'Size' + Workspace.mainDock.conf.size );
-					}
-					dlength += ge( 'Tray' ).offsetWidth;
-					right = ge( 'Tray' ).offsetWidth;
-				}
 				baseElement.style.width = 'calc(100% - ' + dlength + 'px)';
 				baseElement.style.right = right + 'px';
 				baseElement.style.height = '100%';
@@ -3587,7 +3578,13 @@ movableMouseDown = function ( e )
 	window.focus();
 	
 	// Close tray bubble
-	CloseTrayBubble();
+	if( ge( 'Tray' ) && ge( 'Tray' ).notificationPopup )
+	{
+		if( e.target && e.target != ge( 'Tray' ).notificationPopup.parentNode )
+		{
+			CloseTrayBubble();
+		}
+	}
 	
 	// Menu trigger
 	var rc = 0;
@@ -3922,6 +3919,8 @@ function InitGuibaseEvents()
 		// On blur, activate current movable (don't put it to front)
 		window.addEventListener( 'blur', function( e )
 		{
+			// Refresh the tray
+			PollTray();
 			
 			var viewObject = null;
 			if( document.activeElement )
